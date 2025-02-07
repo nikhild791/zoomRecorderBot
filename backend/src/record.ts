@@ -8,9 +8,30 @@ import {
 } from "selenium-webdriver";
 import { Options } from "selenium-webdriver/chrome";
 
-async function openMeet(driver: WebDriver) {
+let driver:WebDriver
+
+async function getDriver() {
+    const options = new Options({});
+    options.addArguments("--disable-blink-features=AutomationControlled");
+    //? this will add fake audio and video
+    options.addArguments("--use-fake-ui-for-media-stream");
+    // options.addArguments('--window-size=1440,900')
+    // options.addArguments('--auto-select-desktop-capture-source=[RECORD]') //[RECORD] is the title of my localhost page trying to screen capture
+    // options.addArguments('enable-usermedia-screen-capturing')
+    // options.addArguments('--remote-debugging-port=9222')
+    options.setUserPreferences({
+        'profile.default_content_setting_values.automatic_downloads': 1
+    });
+    return await new Builder()
+      .forBrowser(Browser.CHROME)
+      .setChromeOptions(options)
+      .build();
+  }
+
+
+async function openMeet(driver: WebDriver, url:string) {
   try {
-    await driver.get("https://meet.google.com/ggc-vuoe-wua");
+    await driver.get(url);
     const x = await driver.getWindowHandle();
     console.log(x + "Hi there");
 
@@ -45,25 +66,9 @@ async function openMeet(driver: WebDriver) {
   }
 }
 
-async function getDriver() {
-  const options = new Options({});
-  options.addArguments("--disable-blink-features=AutomationControlled");
-  //? this will add fake audio and video
-  options.addArguments("--use-fake-ui-for-media-stream");
-  // options.addArguments('--window-size=1440,900')
-  // options.addArguments('--auto-select-desktop-capture-source=[RECORD]') //[RECORD] is the title of my localhost page trying to screen capture
-  // options.addArguments('enable-usermedia-screen-capturing')
-  // options.addArguments('--remote-debugging-port=9222')
-  return await new Builder()
-    .forBrowser(Browser.CHROME)
-    .setChromeOptions(options)
-    .build();
-}
 
-async function startScreenShare(driver: WebDriver, tabId: string) {
-  console.log("screenShareStarted ");
-  console.log(tabId);
-  
+
+async function startScreenShare(driver: WebDriver, tabId: string) {    
   await driver.executeScript(`
     function wait(delayInMS) {
         return new Promise((resolve) => setTimeout(resolve, delayInMS));
@@ -109,13 +114,18 @@ if (displaySurface == "browser") {
   controller.setFocusBehavior("no-focus-change");
 }
         console.log("Recording has been started");
-        const recordedChunks = await startRecording(stream, 30000);
-        let recordedBlob = new Blob(recordedChunks, { type: "video/webm" });
-        recording.src = URL.createObjectURL(recordedBlob);
-        downloadButton.href = recording.src;
-        downloadButton.download = "RecordedVideo.webm";
-        downloadButton.click();
-        console.log("Recording has been completed");
+        setInterval(() => {
+        async function OgRecording(){
+            const recordedChunks = await startRecording(stream, 9000);
+            let recordedBlob = new Blob(recordedChunks, { type: "video/webm" });
+            recording.src = URL.createObjectURL(recordedBlob);
+            downloadButton.href = recording.src;
+            downloadButton.download = "RecordedVideo.webm";
+            downloadButton.click();
+            console.log("Recording has been completed");
+            }
+            OgRecording()
+        }, 9000);
     }).catch(error => {
         console.error("Error during screen recording: ", error);
     });
@@ -123,14 +133,19 @@ if (displaySurface == "browser") {
 `);
 }
 
-async function main() {
-  const driver = await getDriver();
-  await openMeet(driver);
+
+export  async function recordMeeting(url:string) {
+driver = await getDriver();
+  await openMeet(driver,url);
   const tabId = await driver.getWindowHandle();
   await startScreenShare(driver, tabId);
 }
 
-main();
+export function stopRecording(){
+    driver.quit()
+}
+
+
 
 //* getting videostream from the current tab and appending in the same tab DOM element
 // window.navigator.mediaDevices.getDisplayMedia().then((stream)=>{

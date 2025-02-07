@@ -12,10 +12,14 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
     "@types/selenium-webdriver": "^4.1.27",
     "typescript": "^5.7.2"
   },
   "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
     "puppeteer": "^23.10.4",
     "selenium-webdriver": "^4.27.0"
   }
